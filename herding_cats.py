@@ -151,7 +151,7 @@ def drawFence(direction):
             mid=fence_h_center,
             stop=fence_h_left,
         )
-
+    hammer_sound.play(pauseTime // 60)
     return pauseTime
 
 
@@ -161,7 +161,7 @@ herder_speed = 3
 cat_speed = 2
 frames_till_start = 180
 width = 800
-height = 400
+height = 800
 
 pygame.init()
 
@@ -178,8 +178,29 @@ clock = pygame.time.Clock()
 
 
 myfont = pygame.font.Font(None, 100)
+subtitleFont = pygame.font.Font(None, 50)
 get_ready_text = myfont.render("GET READY", False, "Red")
-get_ready_rect = get_ready_text.get_rect(center=(width / 2, height / 2))
+get_ready_rect = get_ready_text.get_rect(center=(width / 2, height / 4))
+
+herder_instructions_text = subtitleFont.render(
+    "HERDER: Use the gamepad's left joystick to move. \n"
+    + "Press A to draw a fence\n"
+    + "Making a fence takes time - longer fence = longer freeze",
+    False,
+    "Red",
+)
+herder_instructions_rect = herder_instructions_text.get_rect(
+    center=(width / 3, height / 2)
+)
+
+cat_instructions_text = subtitleFont.render(
+    "CAT: Use arrow keys to move. \n" + "Try to blend in with the other cats!\n",
+    False,
+    "Red",
+)
+cat_instructions_rect = cat_instructions_text.get_rect(
+    center=(2 * width / 3, height / 2)
+)
 
 cats_won_text = myfont.render("THE CATS WON", False, "Red")
 cats_won_rect = cats_won_text.get_rect(center=(width / 2, height / 2))
@@ -217,18 +238,18 @@ while True:
             exit()
         elif event.type == pygame.JOYBUTTONDOWN:
             if event.button == 1:
-                
-                pause_time = drawFence(herder.sprites()[0].direction)
-                herder.pause_time = pause_time
-            #if event.button == 0:
-                #print("B button pressed")
+
+                pause_time = drawFence(herder.sprite.direction)
+                herder.sprite.pause_time = pause_time
+            # if event.button == 0:
+            # print("B button pressed")
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_r]:
         reset_game()
     if keys[pygame.K_f]:
-        pause_time = drawFence(herder.sprites()[0].direction)
-        herder.sprites()[0].pause_time = pause_time
+        pause_time = drawFence(herder.sprite.direction)
+        herder.sprite.pause_time = pause_time
 
     screen.blit(background, (0, 0))
 
@@ -238,9 +259,11 @@ while True:
     herder.draw(screen)
 
     if frames_till_start > 0:
-        pygame.mixer.music.pause()
+        # pygame.mixer.music.pause()
         frames_till_start -= 1
         screen.blit(get_ready_text, get_ready_rect)
+        #screen.blit(herder_instructions_text, herder_instructions_rect)
+        #screen.blit(cat_instructions_text, cat_instructions_rect)
         # 2 motors here, first parameter is low frequency, second is high
         # values are 0-1
         # joystick_herder.rumble(1, 0, 100)
@@ -249,23 +272,24 @@ while True:
     elif winner == "herder":
         screen.blit(herder_won_text, herder_won_rect)
     else:
-
-        pygame.mixer.music.unpause()
+        # if pygame.mixer.music.
+        # pygame.mixer.music.unpause()
         player_cat.update(fences)
         npc_cats.update(fences)
         herder.update(fences)
 
         # did the herder hit any cats?
         for c in npc_cats:
-            if pygame.sprite.collide_mask(herder.sprites()[0], c):
+            if pygame.sprite.collide_mask(herder.sprite, c):
                 npc_cats.remove(c)
                 meow_sound.play()
                 if len(npc_cats.sprites()) == 0:
                     winner = "cats"
 
         # did the herder hit the player cat?
-        if pygame.sprite.collide_mask(herder.sprites()[0], player_cat.sprites()[0]):
+        if pygame.sprite.collide_mask(herder.sprite, player_cat.sprites()[0]):
             winner = "herder"
 
     pygame.display.update()
+    # pygame.event.pump()
     clock.tick(60)
